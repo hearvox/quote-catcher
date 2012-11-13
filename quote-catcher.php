@@ -32,12 +32,27 @@ function quote_catcher() {
 
 	$quote_catcher_array = array( $id, $author_id, $title, $url, $qc_quote, $qc_quoteby, $qc_quotetitle ); 
 
-	$author_html = '<a href="' . get_author_posts_url( $author_id ) . '" title="Author Posts">' . get_the_author_meta( 'display_name', $author_id ) . '</a>';
-	$author = ( ! $quoteby ) ? $author_html : $quoteby;		  
-	$title = ( ! $quotetitle ) ? get_the_title( $id ) : $quotetitle;
-
 	return $quote_catcher_array;
 }
+
+function quote_catcher_html() {
+	/* Get array with post and quote-related custom fields */
+	$quote_catcher_array = quote_catcher();
+
+	$id = $quote_catcher_array[0];
+	$author_id = $quote_catcher_array[1];
+	$title = $quote_catcher_array[2];
+	$url = $quote_catcher_array[3];
+	$qc_quote = $quote_catcher_array[4];
+	$qc_quoteby = $quote_catcher_array[5];
+	$qc_quotetitle = $quote_catcher_array[6];
+
+	$quote_catcher_html = '';
+
+	return $quote_catcher_html;
+}
+
+
 
 /* Add box in Edit Post panel for entering quote values */
 /* Fire our meta box setup function on the post editor screen. */
@@ -140,11 +155,9 @@ function quote_catcher_load_widgets() {
 }
 
 /**
- * Example Widget class.
- * This class handles everything that needs to be handled with the widget:
- * the settings, form, display, and update.  Nice!
+ * QuoteCatcher Widget class.
+ * This class handles the widget's settings, form, display, and update.
  *
- * @since 0.1
  */
 class QuoteCatcher_Widget extends WP_Widget {
 
@@ -167,18 +180,45 @@ class QuoteCatcher_Widget extends WP_Widget {
 	 */
 	function widget( $args, $instance ) {
 		extract( $args );
-
+		
 		/* Our variables from the widget settings. */
 		$title = apply_filters('widget_title', $instance['title'] );
-		$show_title = isset( $instance['show_title'] ) ? $instance['show_title'] : false;
 
 		/* Before widget (defined by themes). */
 		echo $before_widget;
 
 		/* Display the widget title if one was input (before and after defined by themes). */
 		/* If show title was selected, display the widget title. */
-		if ( $title && $show_title )
+		if ( $title )
 			echo $before_title . $title . $after_title;
+/*
+		if ( function_exists( 'quote_catcher' ) ) {
+			$quote_arr = quote_catcher();
+    		print_r( $quote_arr );
+ 		}
+*/
+
+		if ( function_exists( 'quote_catcher' ) ) {
+			$quote_catcher_array = quote_catcher();
+
+			$id = $quote_catcher_array[0];
+			$author_id = $quote_catcher_array[1];
+			$title = $quote_catcher_array[2];
+			$url = $quote_catcher_array[3];
+			$quote = $quote_catcher_array[4];
+			$quoteby = $quote_catcher_array[5];
+			$quotetitle = $quote_catcher_array[6];
+
+			$author_html = '<a href="' . get_author_posts_url( $author_id ) . '" title="Author Posts">' . get_the_author_meta( 'display_name', $author_id ) . '</a>';
+			$author = ( ! $quoteby ) ? $author_html : $quoteby;		  
+			$title = ( ! $quotetitle ) ? $title : $quotetitle;
+?>
+<blockquote class="pullquote quote-catcher" style="width:252px;font-size:17px;line-height: 30px;color:#000;border-top:2px #ccc dotted; border-bottom:2px #ccc dotted;" cite="<?php echo $url; ?>">
+	<span style="font-size:50px;font-style:normal;font-family:serif; position: relative; top: 18px; line-height: 18px;">&ldquo;</span><?php echo wptexturize( $quote ); ?><span style="font-size:50px;font-style:normal;font-family:serif; position: relative; top: 18px; line-height: 18px;">&rdquo;</span>
+	<div style="font-size:0.9em; font-style:normal;">&mdash;<?php echo $author ?>, <b>"<a href="<?php echo $url; ?>" rel="bookmark" title="Permanent Link to <?php echo $title; ?>"><?php echo $title; ?></a>"</b><?php echo $a ?></div> 
+</blockquote>
+<?php
+		}
 
 		/* After widget (defined by themes). */
 		echo $after_widget;
@@ -193,9 +233,6 @@ class QuoteCatcher_Widget extends WP_Widget {
 		/* Strip tags for title and name to remove HTML (important for text inputs). */
 		$instance['title'] = strip_tags( $new_instance['title'] );
 
-		/* No need to strip tags for show_title. */
-		$instance['show_title'] = $new_instance['show_title'];
-
 		return $instance;
 	}
 
@@ -207,19 +244,13 @@ class QuoteCatcher_Widget extends WP_Widget {
 	function form( $instance ) {
 
 		/* Set up some default widget settings. */
-		$defaults = array( 'title' => __('', 'example'), 'show_title' => true );
+		$defaults = array( 'title' => __('', 'example') );
 		$instance = wp_parse_args( (array) $instance, $defaults ); ?>
 
 		<!-- Widget Title: Text Input -->
 		<p>
 			<label for="<?php echo $this->get_field_id( 'title' ); ?>"><?php _e('Title:', 'hybrid'); ?></label>
 			<input id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" value="<?php echo $instance['title']; ?>" style="width:100%;" />
-		</p>
-
-		<!-- Show Title? Checkbox -->
-		<p>
-			<input class="checkbox" type="checkbox" <?php checked( $instance['show_title'], true ); ?> id="<?php echo $this->get_field_id( 'show_title' ); ?>" name="<?php echo $this->get_field_name( 'show_title' ); ?>" /> 
-			<label for="<?php echo $this->get_field_id( 'show_title' ); ?>"><?php _e('Display Title?', 'example'); ?></label>
 		</p>
 
 	<?php
