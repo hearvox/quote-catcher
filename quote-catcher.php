@@ -9,26 +9,32 @@ Author URI: http://transom.org/
 License: GPL2
 */
 
-function quote_catcher() {
-	/* Get a random post with a quote in Custom Field */
-	$args = array(
-		'numberposts' => 1,
-		'meta_key' => 'qc_quote',
-		'orderby' => 'rand'
-	);
-	$qc_posts = get_posts( $args );
+/* Make array of posts that have custom field 'qc_quote'. ( */
+$args = array(
+	'numberposts' => -1,
+	'meta_key' => 'qc_quote',
+	'orderby' => 'rand'
+);
 
-	/* Set posts default variables: ID, Author, Title, URL */
-	$id = $qc_posts[0]->ID;
-	$author_id = $qc_posts[0]->post_author;
-	$title = $qc_posts[0]->post_title;
+$qc_posts_with_quote = get_posts( $args );
+
+function quote_catcher() {
+
+	global $qc_posts_with_quote;
+	
+	/* Get a random key from the array.*/
+	$qc_post_id = array_rand( $qc_posts_with_quote );
+	
+	$id = $qc_posts_with_quote[$qc_post_id]->ID;
+	$author_id = $qc_posts_with_quote[$qc_post_id]->post_author;
+	$title = $qc_posts_with_quote[$qc_post_id]->post_title;
 	$url = get_permalink( $id );
 
 	/* Get custom-field value for: quote, and any other CF values
 	for replacing default: Author, Title */
 	$qc_quote = get_post_meta( $id, 'qc_quote', true );
-	$qc_quoteby = get_post_meta($id, 'qc_quoteby', true);
-	$qc_quotetitle = get_post_meta($id, 'qc_quotetitle', true);
+	$qc_quoteby = get_post_meta( $id, 'qc_quoteby', true);
+	$qc_quotetitle = get_post_meta( $id, 'qc_quotetitle', true);
 
 	$quote_catcher_array = array( $id, $author_id, $title, $url, $qc_quote, $qc_quoteby, $qc_quotetitle ); 
 
@@ -199,6 +205,8 @@ class QuoteCatcher_Widget extends WP_Widget {
 */
 
 		if ( function_exists( 'quote_catcher' ) ) {
+		
+		
 			$quote_catcher_array = quote_catcher();
 
 			$id = $quote_catcher_array[0];
@@ -217,6 +225,8 @@ class QuoteCatcher_Widget extends WP_Widget {
 	<span style="font-size:50px;font-style:normal;font-family:serif; position: relative; top: 18px; line-height: 18px;">&ldquo;</span><?php echo wptexturize( $quote ); ?><span style="font-size:50px;font-style:normal;font-family:serif; position: relative; top: 18px; line-height: 18px;">&rdquo;</span>
 	<div style="font-size:0.9em; font-style:normal;">&mdash;<?php echo $author ?>, <b>"<a href="<?php echo $url; ?>" rel="bookmark" title="Permanent Link to <?php echo $title; ?>"><?php echo $title; ?></a>"</b><?php echo $a ?></div> 
 </blockquote>
+<p><?php print_r( $quote_catcher_array ); ?></p>
+<p class="clear"><?php echo get_num_queries(); ?> queries, <?php timer_stop(1); ?> seconds, <?php echo round(memory_get_peak_usage() / 1024 / 1024, 3); ?> MB Peak Memory Used</p>
 <?php
 		}
 
